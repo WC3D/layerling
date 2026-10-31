@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadMessages } from "./build-guide.mjs";
 import { scenes } from "./guide-scenes.mjs";
@@ -74,7 +74,12 @@ async function session(language, port) {
 async function run(language, port) {
   const messages = await loadMessages(language);
   const { send, evaluate, close } = await session(language, port);
-  const imageDirectory = join(root, "docs", "guide", "images", language);
+  const imageRoot = resolve(root, "docs", "guide", "images");
+  const imageDirectory = join(imageRoot, language);
+  const relativeImageDirectory = relative(imageRoot, imageDirectory);
+  if (relativeImageDirectory === ".." || relativeImageDirectory.startsWith(`..${sep}`) || isAbsolute(relativeImageDirectory)) {
+    throw new Error("Invalid file path");
+  }
   mkdirSync(imageDirectory, { recursive: true });
   const editorList = async () => {
     const editors = await (await fetch(`${BASE}/api/layerling-mcp`)).json();
