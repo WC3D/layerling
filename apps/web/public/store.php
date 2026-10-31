@@ -492,6 +492,9 @@ function move_received_file(string $from, string $to, bool $uploaded): bool
 /** A .lyl is a ZIP. Anything else never reaches the disk. */
 function looks_like_lyl(string $path): bool
 {
+    if (mb_strpos($path, '..') !== false) {
+        throw new \Exception('Invalid file path');
+    }
     $signature = substr(file_head($path, 4), 0, 4);
     if ($signature !== "PK\x03\x04" && $signature !== "PK\x05\x06") {
         return false;
